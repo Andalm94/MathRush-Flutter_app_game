@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 import 'package:math_flutter/const.dart';
 import 'package:math_flutter/final_page.dart';
-import 'package:math_flutter/test_page.dart';
 import 'package:math_flutter/util/my_button.dart';
 import 'package:math_flutter/util/my_level_box.dart';
 import 'package:math_flutter/util/my_progress_bar.dart';
@@ -24,35 +23,40 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin{
 
-  //ANIMATION
+
+  //============================= GAME VARIABLES ===================================
+
+  //Animation
   late AnimationController lottieController;
   bool lottieFinished = false;
-  int score = 0;
-  
-  String userAnswer = '';
 
-  var randomNumber = Random();
-  int numberA = 1;
-  int numberB = 1;
-  String operation = '';
-  String question = '';
-
-  int currentExp = 0;
-  int currentLvl = 0;
-  bool lvl1Complete = false;
-  bool lvl2Complete = false;
-  bool lvl3Complete = false;
-  bool lvl4Complete = false;
-  bool lvl5Complete = false;
-  bool gameComplete = false;
-
-  var timerCount = 10;
-
-  bool successLottieIsVisible = false; 
-
-   bool lvlUp = false;
-
+  //Exp and Timer
   late Timer _timer;
+  int timerCount = 10;
+  int currentExp = 0;
+
+  //Leveling
+  late int currentLvl;
+  late int score;
+  bool lvlUp = false;
+  
+  //Question
+  late int numberA;
+  late int numberB;
+  late String operation;
+  late String question;
+  late String userAnswer;
+  var randomNumber = Random();
+
+  //================================================================================
+
+
+
+
+
+
+
+  //============================== FUNCTIONS =======================================
 
   void countDown(){
     
@@ -67,7 +71,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
 
       }
       if(timerCount==0){
-        setCurrentExp(false);
+        setCurrentExp(true, 0, 0);
         createQuestion();
         setState(() {
           timerCount = 10;    
@@ -84,20 +88,12 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       // C and DEL behavior
       // limit to 3 the maximum lenght of user input
       if(button == '='){
-        checkResult();
+        equalPressed();
         userAnswer = '';
       }else if(button == 'C'){
-        //userAnswer = '';
-        userAnswer = resolverPregunta(numberA, numberB, operation).toString();
+        userAnswer = '';
+        userAnswer = solveOperation(numberA, numberB, operation).toString(); // DELETE THIS LINE AFTER DEBUG
       } else if (button == 'DEL' && userAnswer.isNotEmpty){
-        
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: ((context) => const Test())
-          )
-        );
-
         userAnswer = userAnswer.substring(0, userAnswer.length-1);
       } else if(userAnswer.length < 3 && button != 'DEL' && button != 'C'){
         userAnswer += button;
@@ -107,39 +103,16 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     });
   }
 
-  void checkResult() {
 
-    double correctResult = 0;
-    double answer = double.parse(userAnswer);
-
-    //The program calculates the correct answer
-    switch(operation){
-      case '+':
-        correctResult = double.parse((numberA + numberB).toString());
-        break;
-      case '-':
-        correctResult = double.parse((numberA - numberB).toString());
-        break;
-      case 'x':
-        correctResult = double.parse((numberA * numberB).toString());
-        break;
-      case '/':
-        correctResult = double.parse((numberA / numberB).toString());
-        break;
-        
-    }
-
-    //Determinate if the user have answered correctly
-    bool result = correctResult==answer;
-
-
-    //Update exp
-    setCurrentExp(result);
-    setScore();
+  void equalPressed(){
+    bool answerIsCorrect = checkResult();
     
-    //Show lottie
-    if(lvlUp == true && gameComplete == true){
+    setCurrentExp(answerIsCorrect, 1, 5);
+    setScore(answerIsCorrect);
 
+    //If the game is completed, we push to the final score page
+    if(currentLvl >= 5){
+      
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -147,8 +120,43 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
         )
       );
 
-      lvlUp = false;
+    }
 
+
+
+
+    //If the player reached 100exp, show a lvlUp lottie and ser currentLvl++
+    //Otherwise, we show a success/fail lottie.
+    print('CurrentExp : $currentExp');
+    print('answerIsCorrect : $answerIsCorrect');
+    if(currentExp >= 100){
+      currentLvl ++;
+      currentExp = 0;
+
+      showDialog(
+        context: context,
+        barrierColor: Colors.transparent,
+        builder: (BuildContext builderContext) {
+          _timer = Timer(const Duration(milliseconds: 750), () {
+            Navigator.of(context).pop();
+          });
+
+          return Center(
+            child:  Container(
+              color: Colors.transparent,
+              width: 175,
+              child: Lottie.asset(
+                'assets/lotties/lvlUpLottie.json',
+                fit: BoxFit.contain
+              )
+            )
+        );
+        }
+      ).then((val){
+        if (_timer.isActive) {
+          _timer.cancel();
+        }
+      });
 
 
     }else{
@@ -165,7 +173,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
             child:  Container(
               color: Colors.transparent,
               width: 175,
-              child: result ? 
+              child: answerIsCorrect ? 
               Lottie.asset(
                 'assets/lotties/ticLottie.json',
                 fit: BoxFit.contain
@@ -183,23 +191,20 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
           _timer.cancel();
         }
       });
+
+
     }
-    
+
+
     print('CurrentLvl: $currentLvl');
-    print('gameComplete: $gameComplete'); 
-
-    //Create a new question
-    if(gameComplete == true){
-
-    }else{
-      createQuestion();
-    }
 
 
-    
+  }
 
-
-
+  bool checkResult() {
+    double correctResult = solveOperation(numberA, numberB, operation);
+    double answer = double.parse(userAnswer);  
+    return correctResult==answer;
   }
 
 
@@ -219,38 +224,22 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
 
   }
 
-  double resolverPregunta(numberA, numberB, operation){
-      
-    double correctResult = 0;
 
-    switch(operation){
-      case '+':
-        correctResult = double.parse((numberA + numberB).toString());
-        break;
-      case '-':
-        correctResult = double.parse((numberA - numberB).toString());
-        break;
-      case 'x':
-        correctResult = double.parse((numberA * numberB).toString());
-        break;
-      case '/':
-        correctResult = double.parse((numberA / numberB).toString());
-        break;
-    }
-    return correctResult;
-  }
-
-
-  void setScore(){
+  void setScore(bool answerIsCorrect){
     setState(() {
-      score += timerCount;
+      if(answerIsCorrect == true){
+        score += timerCount;  
+      }else{
+        score += timerCount;
+      }
+      
     });
   }
 
-  void setCurrentExp(bool success){
+  void setCurrentExp(bool success, int expInSuccess, int expInFail){
     
     if(success == false){
-      currentExp -= 5;
+      currentExp -= expInFail;
       if(currentExp < 0){
         currentExp = 0;
       }
@@ -260,44 +249,58 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
         setState(() {
           switch(currentLvl){
             case 0:
-              currentExp += 100;
+              currentExp += expInSuccess * 25;
               break;
             case 1:
-              currentExp += 100;
+              currentExp += expInSuccess * 20;
               break;
             case 2:
-              currentExp += 100;
+              currentExp += expInSuccess * 20;
               break;
             case 3:
-              currentExp += 100;
+              currentExp += expInSuccess * 15;
               break;
             case 4:
-              currentExp += 100;
+              currentExp += expInSuccess * 15;
+              break;
+            case 5:
+              currentExp += expInSuccess * 10;
               break;
           }
         });
       }
     }
 
-    if(currentExp >= 100){
-      setLvlUp();
-      lvlUp = true;
-      currentExp = 0;
-    }
+
 
 
   }
 
 
 
+
+  //================================================================================
   
-  //WIDGET BUILD
+
+
+
+
+
+
+
+  //=============================== WIDGET BUILD ===================================
   @override
   void initState() {
     super.initState();
+    
+    //Initialize variables
+
+    currentLvl = 0;
+    score = 0;
+    userAnswer = '';
+
     createQuestion();
     countDown();
-    score = 0;
 
     lottieController = AnimationController(
       vsync: this,
@@ -312,49 +315,6 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
           Navigator.pop(context);
         });
       }      
-    });
-
-  }
-
-  void setLvlUp(){
-    setState(() {
-
-      switch(currentLvl){
-        case 0:
-          lvl1Complete = true;
-          lvl2Complete = false;
-          lvl3Complete = false;
-          lvl4Complete = false;
-          lvl5Complete = false;
-          break;
-        case 1:
-          lvl1Complete = true;
-          lvl2Complete = true;
-          lvl3Complete = false;
-          lvl4Complete = false;
-          lvl5Complete = false;
-          break;
-        case 2:
-          lvl1Complete = true;
-          lvl2Complete = true;
-          lvl3Complete = true;
-          lvl4Complete = false;
-          lvl5Complete = false;
-          break;
-        case 3:
-          lvl1Complete = true;
-          lvl2Complete = true;
-          lvl3Complete = true;
-          lvl4Complete = true;
-          lvl5Complete = false;
-          break;
-        case 4:
-          gameComplete = true;
-          break;
-      }
-      currentLvl++; 
-
-      
     });
 
   }
@@ -378,11 +338,11 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
               
               crossAxisSpacing: 5,
               children: [
-                MyLevelBox(complete: lvl1Complete),
-                MyLevelBox(complete: lvl2Complete),
-                MyLevelBox(complete: lvl3Complete),
-                MyLevelBox(complete: lvl4Complete),
-                MyLevelBox(complete: lvl5Complete),
+                MyLevelBox(complete: currentLvl>=1),
+                MyLevelBox(complete: currentLvl>=2),
+                MyLevelBox(complete: currentLvl>=3),
+                MyLevelBox(complete: currentLvl>=4),
+                MyLevelBox(complete: currentLvl>=5),
                 
               ],
             ),
