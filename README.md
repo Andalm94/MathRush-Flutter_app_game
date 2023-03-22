@@ -1,6 +1,6 @@
 # Math Rush!
 
-##A math game made in flutter
+## A math game made in flutter
 
 - The program generates questions automatically and the player must answer them before time runs out.  
 - By answering each question, the player will score points based on how quickly they answered.  
