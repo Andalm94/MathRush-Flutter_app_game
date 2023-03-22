@@ -1,14 +1,10 @@
 # Math Rush!
 
-A new Flutter project.
-
 A math game made in flutter.
 
-The program generates questions automatically and the player must answer them before time runs out.
-
-By answering each question, the player will score points based on how quickly they answered.
-
-The player must overcome 5 levels as the questions become more difficult.
+- The program generates questions automatically and the player must answer them before time runs out.  
+- By answering each question, the player will score points based on how quickly they answered.  
+- The player must overcome 5 levels as the questions become more difficult.  
 
 Menu  
 ![menu](https://user-images.githubusercontent.com/80630397/226966707-45ed5c7d-4156-4e13-8255-2ab2978248d9.gif)
