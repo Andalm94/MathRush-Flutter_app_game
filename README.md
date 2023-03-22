@@ -1,16 +1,6 @@
-# math_flutter
+# Math Rush!
 
 A new Flutter project.
 
-## Getting Started
-
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+![menu](https://user-images.githubusercontent.com/80630397/226966707-45ed5c7d-4156-4e13-8255-2ab2978248d9.gif)
+![gameScreen](https://user-images.githubusercontent.com/80630397/226966711-0282c6de-9e14-4729-b873-06935ac54ea0.gif)
